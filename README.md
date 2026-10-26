@@ -1,0 +1,1 @@
+# AIMD Analysis Kit`n`nToolkit for reproducible analysis of ab initio molecular dynamics trajectories.`n`n## Status`n`nInitial repository scaffold.`n
