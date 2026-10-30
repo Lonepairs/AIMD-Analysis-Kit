@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aimd-analysis-kit"
+version = "0.1.0"
+description = "Reproducible analysis tools for VASP AIMD trajectories at metal-water interfaces"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.23",
+    "MDAnalysis>=2.0",
+]
+
+[project.optional-dependencies]
+plot = ["matplotlib>=3.5"]
+cluster = ["PyYAML>=6.0"]
+dev = [
+    "build>=1.2",
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+aimd-analysis = "aimd_analysis.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
