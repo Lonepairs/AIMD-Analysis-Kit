@@ -1,0 +1,17 @@
+{
+  "schema_version": "1",
+  "source": {
+    "path": "source.md",
+    "format": "md"
+  },
+  "backend": {
+    "name": "direct-read",
+    "mode": "markdown"
+  },
+  "artifacts": {
+    "markdown": "output.md"
+  },
+  "counts": {
+    "text_blocks": 1
+  }
+}

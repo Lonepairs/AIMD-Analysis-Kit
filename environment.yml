@@ -1,0 +1,12 @@
+name: aimd-analysis-kit
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - numpy>=1.23
+  - mdanalysis>=2.0
+  - matplotlib>=3.5
+  - pyyaml>=6.0
+  - pip
+  - pip:
+      - -e .
