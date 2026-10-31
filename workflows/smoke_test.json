@@ -1,0 +1,64 @@
+{
+  "jobs": [
+    {
+      "name": "minimal-density",
+      "choice": "1",
+      "args": {
+        "xdatcar": "../examples/minimal_case/XDATCAR",
+        "reference": "../examples/minimal_case/POSCAR",
+        "output_dir": "../_smoke/workflow-density",
+        "start": 1,
+        "end": 3,
+        "origin": 0.3,
+        "data_root": "../examples",
+        "overwrite": true
+      }
+    },
+    {
+      "name": "minimal-polar-angle",
+      "choice": "2",
+      "args": {
+        "xdatcar": "../examples/minimal_case/XDATCAR",
+        "reference": "../examples/minimal_case/POSCAR",
+        "output_dir": "../_smoke/workflow-polar",
+        "start": 1,
+        "end": 3,
+        "origin": 5,
+        "data_root": "../examples",
+        "overwrite": true
+      }
+    },
+    {
+      "name": "minimal-hydrogen-bonds",
+      "choice": "3",
+      "args": {
+        "xdatcar": "../examples/minimal_case/XDATCAR",
+        "reference": "../examples/minimal_case/POSCAR",
+        "output_dir": "../_smoke/workflow-hbond",
+        "start": 1,
+        "end": 3,
+        "boundaries": [1.0, 3.0],
+        "data_root": "../examples",
+        "overwrite": true
+      }
+    },
+    {
+      "name": "minimal-rdf",
+      "choice": "4",
+      "args": {
+        "xdatcar": "../examples/minimal_case/XDATCAR",
+        "reference": "../examples/minimal_case/POSCAR",
+        "output_dir": "../_smoke/workflow-rdf",
+        "start": 1,
+        "end": 3,
+        "element_x": "O",
+        "element_y": "O",
+        "rmax": 4.5,
+        "nbins": 30,
+        "origin": true,
+        "data_root": "../examples",
+        "overwrite": true
+      }
+    }
+  ]
+}

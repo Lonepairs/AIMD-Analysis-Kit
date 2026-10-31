@@ -14,8 +14,14 @@ dist/
 
 results/
 _smoke/
+_staging/
+.local_inventory/
 analysis_*/
+batch_status.csv
 *.tgz
+*.tgz.sha256
+*.tar.gz
+*.tar.gz.sha256
 
 **/XDATCAR
 !examples/minimal_case/XDATCAR

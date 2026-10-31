@@ -1,0 +1,42 @@
+{
+  "case_matrix": {
+    "cases": [
+      {"system": "Cu", "ensemble": "aimd1", "boundaries": [4.2, 8.6], "surface_species": "Cu", "rdf_pairs": [{"x": "O", "y": "O"}, {"x": "O", "y": "H"}, {"x": "Cu", "y": "O", "x_scope": "top-layer"}, {"x": "Cu", "y": "H", "x_scope": "top-layer"}]},
+      {"system": "Cu", "ensemble": "aimd1_e", "boundaries": [4.35, 10.95], "surface_species": "Cu", "rdf_pairs": [{"x": "O", "y": "O"}, {"x": "O", "y": "H"}, {"x": "Cu", "y": "O", "x_scope": "top-layer"}, {"x": "Cu", "y": "H", "x_scope": "top-layer"}]},
+      {"system": "CuxPd1", "ensemble": "aimd1", "trajectory_variant": "updated_neutral", "boundaries": [3.95, 7.85], "surface_species": "Cu,Pd", "rdf_pairs": [{"x": "O", "y": "O"}, {"x": "O", "y": "H"}, {"x": "Cu", "y": "O", "x_scope": "top-layer"}, {"x": "Cu", "y": "H", "x_scope": "top-layer"}, {"x": "Pd", "y": "O", "x_scope": "top-layer"}, {"x": "Pd", "y": "H", "x_scope": "top-layer"}]},
+      {"system": "CuxPd1", "ensemble": "aimd1_e", "boundaries": [4.35, 8.15], "surface_species": "Cu,Pd", "rdf_pairs": [{"x": "O", "y": "O"}, {"x": "O", "y": "H"}, {"x": "Cu", "y": "O", "x_scope": "top-layer"}, {"x": "Cu", "y": "H", "x_scope": "top-layer"}, {"x": "Pd", "y": "O", "x_scope": "top-layer"}, {"x": "Pd", "y": "H", "x_scope": "top-layer"}]},
+      {"system": "Pd", "ensemble": "aimd1", "boundaries": [5.1, 10.2], "surface_species": "Pd", "rdf_pairs": [{"x": "O", "y": "O"}, {"x": "O", "y": "H"}, {"x": "Pd", "y": "O", "x_scope": "top-layer"}, {"x": "Pd", "y": "H", "x_scope": "top-layer"}]},
+      {"system": "Pd", "ensemble": "aimd1_e", "boundaries": [4.35, 11.85], "surface_species": "Pd", "rdf_pairs": [{"x": "O", "y": "O"}, {"x": "O", "y": "H"}, {"x": "Pd", "y": "O", "x_scope": "top-layer"}, {"x": "Pd", "y": "H", "x_scope": "top-layer"}]},
+      {"system": "PdxCu1", "ensemble": "aimd1", "boundaries": [4.8, 8.1], "surface_species": "Pd,Cu", "rdf_pairs": [{"x": "O", "y": "O"}, {"x": "O", "y": "H"}, {"x": "Pd", "y": "O", "x_scope": "top-layer"}, {"x": "Pd", "y": "H", "x_scope": "top-layer"}, {"x": "Cu", "y": "O", "x_scope": "top-layer"}, {"x": "Cu", "y": "H", "x_scope": "top-layer"}]},
+      {"system": "PdxCu1", "ensemble": "aimd1_e", "boundaries": [4.75, 9.45], "surface_species": "Pd,Cu", "rdf_pairs": [{"x": "O", "y": "O"}, {"x": "O", "y": "H"}, {"x": "Pd", "y": "O", "x_scope": "top-layer"}, {"x": "Pd", "y": "H", "x_scope": "top-layer"}, {"x": "Cu", "y": "O", "x_scope": "top-layer"}, {"x": "Cu", "y": "H", "x_scope": "top-layer"}]}
+    ],
+    "templates": [
+      {
+        "name": "{system}-{ensemble}-density",
+        "choice": "1",
+        "args": {"xdatcar": "../data/{system}/{ensemble}/XDATCAR", "reference": "../data/{system}/{ensemble}/POSCAR", "output_dir": "../results/{system}/{ensemble}/density", "start": 5001, "end": 9000, "origin": 0.3, "surface_species": "{surface_species}", "data_root": "../data"}
+      },
+      {
+        "name": "{system}-{ensemble}-polar-angle",
+        "choice": "2",
+        "args": {"xdatcar": "../data/{system}/{ensemble}/XDATCAR", "reference": "../data/{system}/{ensemble}/POSCAR", "output_dir": "../results/{system}/{ensemble}/polar-angle", "start": 5001, "end": 9000, "boundaries": "{boundaries}", "origin": 5, "surface_species": "{surface_species}", "data_root": "../data"}
+      },
+      {
+        "name": "{system}-{ensemble}-hydrogen-bonds",
+        "choice": "3",
+        "args": {"xdatcar": "../data/{system}/{ensemble}/XDATCAR", "reference": "../data/{system}/{ensemble}/POSCAR", "output_dir": "../results/{system}/{ensemble}/hydrogen-bonds", "start": 5001, "end": 9000, "boundaries": "{boundaries}", "surface_species": "{surface_species}", "data_root": "../data"}
+      },
+      {
+        "name": "{system}-{ensemble}-{pair}-rdf",
+        "choice": "4",
+        "expand_pairs": "rdf_pairs",
+        "args": {"xdatcar": "../data/{system}/{ensemble}/XDATCAR", "reference": "../data/{system}/{ensemble}/POSCAR", "output_dir": "../results/{system}/{ensemble}/rdf/{pair}", "start": 5001, "end": 9000, "element_x": "{element_x}", "element_y": "{element_y}", "x_scope": "{x_scope}", "surface_species": "{surface_species}", "origin": true, "data_root": "../data"}
+      },
+      {
+        "name": "{system}-{ensemble}-bader",
+        "choice": "5",
+        "args": {"root": "../data", "system": "{system}", "ensemble": "{ensemble}", "output_dir": "../results/{system}/{ensemble}/bader", "potcar": "../data/{system}/{ensemble}/POTCAR"}
+      }
+    ]
+  }
+}
