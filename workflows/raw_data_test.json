@@ -1,0 +1,84 @@
+{
+  "jobs": [
+    {
+      "name": "raw-cu-aimd1-density",
+      "choice": "1",
+      "args": {
+        "xdatcar": "../data/Cu/aimd1/XDATCAR",
+        "reference": "../data/Cu/aimd1/POSCAR",
+        "output_dir": "../_smoke/raw-data/Cu-aimd1/density",
+        "start": 5001,
+        "end": 5003,
+        "origin": 0.3,
+        "surface_species": "Cu",
+        "data_root": "../data",
+        "overwrite": true
+      }
+    },
+    {
+      "name": "raw-cu-aimd1-polar-angle",
+      "choice": "2",
+      "args": {
+        "xdatcar": "../data/Cu/aimd1/XDATCAR",
+        "reference": "../data/Cu/aimd1/POSCAR",
+        "output_dir": "../_smoke/raw-data/Cu-aimd1/polar-angle",
+        "start": 5001,
+        "end": 5003,
+        "boundaries": [4.2, 8.6],
+        "origin": 5,
+        "surface_species": "Cu",
+        "data_root": "../data",
+        "overwrite": true
+      }
+    },
+    {
+      "name": "raw-cu-aimd1-hydrogen-bonds",
+      "choice": "3",
+      "args": {
+        "xdatcar": "../data/Cu/aimd1/XDATCAR",
+        "reference": "../data/Cu/aimd1/POSCAR",
+        "output_dir": "../_smoke/raw-data/Cu-aimd1/hydrogen-bonds",
+        "start": 5001,
+        "end": 5003,
+        "boundaries": [4.2, 8.6],
+        "surface_species": "Cu",
+        "data_root": "../data",
+        "overwrite": true
+      }
+    },
+    {
+      "name": "raw-cu-aimd1-rdf",
+      "choice": "4",
+      "args": {
+        "xdatcar": "../data/Cu/aimd1/XDATCAR",
+        "reference": "../data/Cu/aimd1/POSCAR",
+        "output_dir": "../_smoke/raw-data/Cu-aimd1/rdf/O-O",
+        "start": 5001,
+        "end": 5003,
+        "element_x": "O",
+        "element_y": "O",
+        "rmax": 4.2,
+        "nbins": 30,
+        "origin": true,
+        "surface_species": "Cu",
+        "data_root": "../data",
+        "overwrite": true
+      }
+    },
+    {
+      "name": "raw-cu-aimd1-bader",
+      "choice": "5",
+      "args": {
+        "root": "../data",
+        "system": "Cu",
+        "ensemble": "aimd1",
+        "output_dir": "../_smoke/raw-data/Cu-aimd1/bader",
+        "start_step": 5500,
+        "end_step": 5500,
+        "step_stride": 500,
+        "surface_species": "Cu",
+        "overwrite": true
+      }
+    }
+  ]
+}
