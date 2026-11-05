@@ -47,6 +47,22 @@
       }
     },
     {
+      "name": "raw-cu-aimd1-hydrogen-bonds-acceptor-centered",
+      "choice": "3",
+      "args": {
+        "xdatcar": "../data/Cu/aimd1/XDATCAR",
+        "reference": "../data/Cu/aimd1/POSCAR",
+        "output_dir": "../_smoke/raw-data/Cu-aimd1/hydrogen-bonds-acceptor-centered",
+        "start": 5001,
+        "end": 5003,
+        "boundaries": [4.2, 8.6],
+        "surface_species": "Cu",
+        "data_root": "../data",
+        "traversal": "acceptor",
+        "overwrite": true
+      }
+    },
+    {
       "name": "raw-cu-aimd1-rdf",
       "choice": "4",
       "args": {

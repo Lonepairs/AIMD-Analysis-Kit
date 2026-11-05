@@ -82,6 +82,26 @@ or 2. The final cutoffs are configurable CLI parameters and default to
 `O_d-O_a < 3.5 A` and `O_a-O_d-H < 30 degrees`. Layer intervals follow the
 explicit polar-angle convention and are never inferred by a half split.
 
+## Acceptor-centered hydrogen-bond traversal
+
+The experimental `--traversal acceptor` mode reverses the search order while
+keeping the same strict minimum-image `O_a-O_b < 3.5 A` and
+`angle O_a-O_b-H < 30 degrees` criteria. For each candidate acceptor `O_a`,
+inspect every other oxygen `O_b` in range. In each frame, the two H atoms
+nearest to `O_b` by minimum-image O-H distance are tested; both must be within
+the configured `parent_oh_max` distance. Equal-distance H candidates are
+ordered by atom index.
+
+Each acceptor `O_a` contributes at most one counted event, even when multiple
+donor oxygens or H atoms qualify. The retained triplet is the witness with
+the smallest angle, then shortest O-O distance, then lowest donor and H atom
+indices. Region membership and `N_acceptor_waters_with_hbond` are based on
+`O_a`. Its zero/one/two distribution is binary by construction, unlike the
+donor-centered distribution that can count two donating H atoms per water.
+This traversal writes `nacceptor_waters_*.csv` files and records the mode and
+per-frame nearest-H assignment in metadata. The default remains donor-centered
+for compatibility.
+
 ## RDF and coordination number
 
 Select reference atoms X and neighbor atoms Y by element from the matching

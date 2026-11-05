@@ -113,6 +113,14 @@ donor-water oxygens with at least one qualifying H; `N_donor_hbonds` counts
 qualifying donor-H/acceptor triplets, so one water contributes 0, 1, or 2.
 No legacy half-split is used.
 
+To compare the alternate acceptor-centered traversal on the same trajectory,
+add `--traversal acceptor`. For each `O_a`, it finds neighboring donor oxygens
+`O_b` within the same cutoff, selects each `O_b`'s two nearest H atoms in that
+frame, and checks `angle O_a-O_b-H < 30 degrees`. Each `O_a` is counted once;
+if several donor/H witnesses qualify, the smallest angle and then shortest
+O-O distance determine the retained triplet. This mode writes
+`nacceptor_waters_*.csv` summaries, with layer membership based on `O_a`.
+
 ## RDF and coordination number
 
 RDF analysis requires a matching POSCAR/CONTCAR and explicit element labels.

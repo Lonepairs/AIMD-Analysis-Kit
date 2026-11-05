@@ -124,13 +124,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             metadata = analyze_hydrogen_bonds(args)
         except (OSError, ValueError) as exc:
             parser.error(str(exc))
+        summary_name = "ndonor_waters_summary.csv" if args.traversal == "donor" else "nacceptor_waters_summary.csv"
         print(
             json.dumps(
                 {
                     "output_dir": str(Path(args.output_dir)),
                     "frames": metadata["frames_analyzed"],
                     "regions": len(metadata["regions"]),
-                    "summary_csv": str(Path(args.output_dir) / "ndonor_waters_summary.csv"),
+                    "summary_csv": str(Path(args.output_dir) / summary_name),
                 },
                 indent=2,
             )
