@@ -23,3 +23,6 @@
   checks.
 - Metal RDF matrix jobs use `top-layer` scope and record a default adjustable
   CN cutoff of 2.5 A.
+- Added local workspace retrieval with an ignored `.retrieval/index.json`,
+  deterministic chunking, BM25-style search, JSON output, and a standalone
+  `scripts/retrieve_workspace.py` wrapper.

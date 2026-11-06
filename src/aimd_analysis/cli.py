@@ -22,6 +22,14 @@ from .rdf import add_rdf_arguments, analyze_rdf
 from .bader import add_bader_arguments, analyze_bader
 from .workflow import run_workflow
 from .bader_response import add_bader_response_arguments, collect_bader_response
+from .retrieval import (
+    DEFAULT_INDEX_NAME,
+    RetrievalError,
+    build_index,
+    format_results,
+    load_index,
+    search_index,
+)
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -60,6 +68,21 @@ def build_parser() -> argparse.ArgumentParser:
     inventory.add_argument("--end", type=int, default=9000)
     inventory.add_argument("--bader-steps", type=int, nargs="+", default=list(DEFAULT_BADER_STEPS))
     inventory.add_argument("--overwrite", action="store_true", help="Allow reuse of a non-empty output directory")
+
+    retrieve = subparsers.add_parser("retrieve", help="Index or search local workspace text.")
+    retrieve_actions = retrieve.add_subparsers(dest="retrieve_action", required=True)
+    retrieve_index = retrieve_actions.add_parser("index", help="Build a local workspace retrieval index.")
+    retrieve_index.add_argument("--root", type=Path, default=Path("."))
+    retrieve_index.add_argument("--index", type=Path, default=Path(".retrieval") / DEFAULT_INDEX_NAME)
+    retrieve_index.add_argument("--chunk-lines", type=int, default=80)
+    retrieve_index.add_argument("--overlap-lines", type=int, default=20)
+    retrieve_index.add_argument("--max-file-bytes", type=int, default=2_000_000)
+    retrieve_index.add_argument("--extension", action="append", dest="extensions", help="Include an extension; repeatable")
+    retrieve_search = retrieve_actions.add_parser("search", help="Search a local workspace retrieval index.")
+    retrieve_search.add_argument("--index", type=Path, default=Path(".retrieval") / DEFAULT_INDEX_NAME)
+    retrieve_search.add_argument("--query", required=True)
+    retrieve_search.add_argument("--top-k", type=int, default=10)
+    retrieve_search.add_argument("--format", choices=("text", "json"), default="text")
     return parser
 
 
@@ -196,6 +219,35 @@ def main(argv: Sequence[str] | None = None) -> int:
         for row in rows:
             print(f"{row['job']}: {row['status']}" + (f" ({row['message']})" if row["message"] else ""))
         return 0 if all(row["status"] in {"OK", "PLANNED"} for row in rows) else 2
+    if args.command == "retrieve":
+        try:
+            if args.retrieve_action == "index":
+                metadata = build_index(
+                    args.root,
+                    args.index,
+                    extensions=args.extensions,
+                    chunk_lines=args.chunk_lines,
+                    overlap_lines=args.overlap_lines,
+                    max_file_bytes=args.max_file_bytes,
+                )
+                print(
+                    json.dumps(
+                        {
+                            "index": str(args.index),
+                            "documents": metadata["document_count"],
+                            "chunks": metadata["chunk_count"],
+                            "skipped": metadata["skipped_count"],
+                        },
+                        indent=2,
+                    )
+                )
+                return 0
+            index = load_index(args.index)
+            results = search_index(index, args.query, top_k=args.top_k)
+            print(format_results(results, args.format))
+            return 0
+        except (OSError, RetrievalError) as exc:
+            parser.error(str(exc))
     parser.print_help()
     return 0
 

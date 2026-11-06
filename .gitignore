@@ -15,6 +15,7 @@ dist/
 results/
 _smoke/
 _staging/
+.retrieval/
 .local_inventory/
 analysis_*/
 batch_status.csv

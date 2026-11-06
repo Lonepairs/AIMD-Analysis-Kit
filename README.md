@@ -24,6 +24,33 @@ The `aimd-analysis --help` command lists the available interfaces.
 Use a relative or user-supplied path for each input and output so the same
 command can run on a workstation or cluster.
 
+## Workspace retrieval
+
+The local retrieval command indexes readable project text without sending
+files to an external service. It includes Markdown, Python, JSON/YAML, shell,
+PowerShell, TOML, CSV, and text files, while excluding Git metadata, cached
+results, trajectories, and generated output directories. Files are split into
+overlapping line chunks and searched with a deterministic BM25-style score.
+
+Build the index from the repository root:
+
+```bash
+aimd-analysis retrieve index --root .
+```
+
+Then search it by topic, parameter, or filename:
+
+```bash
+aimd-analysis retrieve search --query "hydrogen bond donor water"
+aimd-analysis retrieve search --query "3.95 7.85" --top-k 5 --format json
+```
+
+The generated `.retrieval/index.json` is local and ignored by Git. Use a
+different `--root` to index a research workspace, and pass `--index` when the
+index is stored elsewhere. The retrieval result is evidence for locating
+relevant files; it does not replace reading the cited source or validating a
+scientific result.
+
 ## Quick Start
 
 Each analysis has its own command and output directory:
