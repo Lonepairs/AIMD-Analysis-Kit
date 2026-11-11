@@ -18,6 +18,7 @@ from aimd_analysis.potcar import PotcarError, validate_potcar_species
 SYSTEMS = ("Cu", "CuxPd1", "Pd", "PdxCu1")
 ENSEMBLES = ("aimd1", "aimd1_e")
 REQUIRED = ("POSCAR", "CHGCAR", "AECCAR0", "AECCAR2", "POTCAR")
+OPTIONAL = ("OUTCAR",)
 
 
 def main() -> int:
@@ -86,7 +87,7 @@ def main() -> int:
                 missing = [name for name in REQUIRED if name not in present]
                 if missing:
                     message = "missing " + ", ".join(missing)
-                elif existing_acf.is_file() and not args.force:
+                elif existing_acf.is_file() and existing_acf.stat().st_size > 0 and not args.force:
                     status = "EXISTS"
                     message = "completed ACF.dat preserved"
                 else:
@@ -95,6 +96,11 @@ def main() -> int:
                         target = destination / name
                         if args.force or not target.exists():
                             shutil.copy2(source / name, target)
+                    for name in OPTIONAL:
+                        if (source / name).is_file():
+                            target = destination / name
+                            if args.force or not target.exists():
+                                shutil.copy2(source / name, target)
                     status = "PREPARED"
                 expected_atom_count = ""
                 source_poscar = source / "POSCAR"

@@ -8,6 +8,7 @@ import json
 import math
 import platform
 import re
+import warnings as warnings_module
 from collections import Counter
 from pathlib import Path
 from typing import Iterable
@@ -31,7 +32,9 @@ ACF_ROW = re.compile(
     r"^\s*(\d+)\s+([-+0-9.Ee]+)\s+([-+0-9.Ee]+)\s+([-+0-9.Ee]+)\s+"
     r"([-+0-9.Ee]+)\s+([-+0-9.Ee]+)\s+([-+0-9.Ee]+)\s*$"
 )
+NELECT_ROW = re.compile(r"\bNELECT\s*=\s*([-+0-9.Ee]+)")
 NONMETAL = frozenset({"O", "H", "He", "K"})
+ELECTRON_COUNT_TOLERANCE = 1.0e-3
 
 
 def _write_csv(path: Path, header: list[str], rows: Iterable[Iterable[object]]) -> None:
@@ -63,6 +66,72 @@ def parse_acf(path: Path) -> list[dict[str, float | int]]:
     if [row["atom_index"] for row in rows] != list(range(1, len(rows) + 1)):
         raise ValueError(f"ACF atom indices are not contiguous from 1 in {path}")
     return rows
+
+
+def parse_chgcar_grid(path: Path) -> tuple[int, int, int]:
+    """Read the first VASP charge-density grid dimensions."""
+
+    source = Path(path)
+    try:
+        lines = source.read_text(encoding="utf-8", errors="strict").splitlines()
+        structure = parse_poscar(source)
+    except (OSError, UnicodeError, ValueError) as exc:
+        raise ValueError(f"cannot read CHGCAR header from {source}: {exc}") from exc
+    cursor = 7
+    if cursor < len(lines) and lines[cursor].strip().lower().startswith("s"):
+        cursor += 1
+    cursor += 1  # coordinate mode
+    grid_index = cursor + structure.atom_count
+    while grid_index < len(lines) and not lines[grid_index].strip():
+        grid_index += 1
+    if grid_index >= len(lines):
+        raise ValueError(f"no charge-density grid found in {source}")
+    fields = lines[grid_index].split()
+    if len(fields) != 3:
+        raise ValueError(f"invalid charge-density grid in {source}: {lines[grid_index]!r}")
+    try:
+        grid = tuple(int(value) for value in fields)
+    except ValueError as exc:
+        raise ValueError(f"invalid charge-density grid in {source}: {lines[grid_index]!r}") from exc
+    if any(value <= 0 for value in grid):
+        raise ValueError(f"charge-density grid must be positive in {source}")
+    return grid
+
+
+def validate_density_grids(paths: Iterable[Path]) -> tuple[int, int, int]:
+    """Require all supplied charge-density files to use the same grid."""
+
+    sources = [Path(path) for path in paths]
+    if len(sources) < 2:
+        raise ValueError("at least two charge-density files are required for a grid check")
+    grids = [(source, parse_chgcar_grid(source)) for source in sources]
+    reference_path, reference_grid = grids[0]
+    mismatches = [
+        f"{source.name}={grid} (expected {reference_path.name}={reference_grid})"
+        for source, grid in grids[1:]
+        if grid != reference_grid
+    ]
+    if mismatches:
+        raise ValueError("charge-density grid mismatch: " + "; ".join(mismatches))
+    return reference_grid
+
+
+def parse_nelect(path: Path) -> float:
+    """Read the first ``NELECT =`` value from an OUTCAR."""
+
+    source = Path(path)
+    try:
+        with source.open("r", encoding="utf-8", errors="strict") as stream:
+            for line in stream:
+                match = NELECT_ROW.search(line)
+                if match:
+                    value = float(match.group(1))
+                    if not math.isfinite(value) or value < 0:
+                        break
+                    return value
+    except (OSError, UnicodeError) as exc:
+        raise ValueError(f"cannot read NELECT from {source}: {exc}") from exc
+    raise ValueError(f"no finite NELECT value found in {source}")
 
 
 def select_top_layer(structure: Structure, tolerance: float = 0.45, surface_species: str | None = None) -> list[int]:
@@ -199,6 +268,9 @@ def _validate_args(args: argparse.Namespace) -> None:
         raise ValueError("Bader step grid is invalid")
     if args.top_layer_tolerance <= 0:
         raise ValueError("top-layer-tolerance must be positive")
+    electron_tolerance = float(getattr(args, "electron_tolerance", ELECTRON_COUNT_TOLERANCE))
+    if not math.isfinite(electron_tolerance) or electron_tolerance < 0:
+        raise ValueError("electron-tolerance must be finite and nonnegative")
     if args.ensemble not in {"aimd1", "aimd1_e"}:
         raise ValueError("ensemble must be aimd1 or aimd1_e")
     if args.ensemble == "aimd1_e" and "K" not in _parse_valences(args.valence):
@@ -276,7 +348,13 @@ def analyze_bader(args: argparse.Namespace) -> dict:
     group_snapshot_rows = []
     electron_rows = []
     surface_rows = []
+    electron_checks = []
+    density_grids = []
+    analysis_warnings: list[str] = []
+    common_density_grid: tuple[int, int, int] | None = None
     expected_valence_population = sum(valence[element] for element in reference.atom_species)
+    electron_tolerance = float(getattr(args, "electron_tolerance", ELECTRON_COUNT_TOLERANCE))
+    strict_electron_count = bool(getattr(args, "strict_electron_count", False))
     for step, snapshot_dir in snapshots:
         snapshot_structure = parse_poscar(snapshot_dir / "POSCAR")
         if (snapshot_structure.species, snapshot_structure.counts) != (reference.species, reference.counts):
@@ -284,6 +362,29 @@ def analyze_bader(args: argparse.Namespace) -> dict:
         acf_rows = parse_acf(snapshot_dir / "ACF.dat")
         if len(acf_rows) != reference.atom_count:
             raise ValueError(f"ACF/POSCAR atom count mismatch at step {step}: {len(acf_rows)} vs {reference.atom_count}")
+        density_paths = [
+            snapshot_dir / name
+            for name in ("CHGCAR", "CHGCAR_sum", "AECCAR0", "AECCAR2")
+            if (snapshot_dir / name).is_file()
+        ]
+        if len(density_paths) >= 2:
+            current_grid = validate_density_grids(density_paths)
+            density_grids.append({"step": step, "dimensions": list(current_grid), "files": [path.name for path in density_paths]})
+            if common_density_grid is None:
+                common_density_grid = current_grid
+            elif current_grid != common_density_grid:
+                raise ValueError(
+                    f"charge-density grid changes between snapshots at step {step}: "
+                    f"{current_grid} vs {common_density_grid}"
+                )
+        elif density_paths:
+            message = f"step {step}: cannot compare charge-density grids; only {density_paths[0].name} is present"
+            analysis_warnings.append(message)
+            warnings_module.warn(message, RuntimeWarning, stacklevel=2)
+        if (snapshot_dir / "CHGCAR").is_file() and (snapshot_dir / "AECCAR0").is_file() and (snapshot_dir / "AECCAR2").is_file() and not (snapshot_dir / "CHGCAR_sum").is_file():
+            message = f"step {step}: CHGCAR_sum is missing although CHGCAR, AECCAR0, and AECCAR2 are present"
+            analysis_warnings.append(message)
+            warnings_module.warn(message, RuntimeWarning, stacklevel=2)
         group_values: dict[str, list[float]] = {}
         group_populations: dict[str, list[float]] = {}
         for index, (element, acf_row) in enumerate(zip(reference.atom_species, acf_rows)):
@@ -306,8 +407,37 @@ def analyze_bader(args: argparse.Namespace) -> dict:
                 (system, ensemble, step, group, len(values), np.mean(values), _csv_stat(_std(values)), np.sum(values), np.mean(populations), np.sum(populations))
             )
         total_population = sum(float(row["electron_population"]) for row in acf_rows)
+        outcar_path = snapshot_dir / "OUTCAR"
+        electron_reference = expected_valence_population
+        electron_reference_source = "sum of POTCAR ZVAL references"
+        if outcar_path.is_file():
+            electron_reference = parse_nelect(outcar_path)
+            electron_reference_source = "OUTCAR NELECT"
+        electron_residual = total_population - electron_reference
+        electron_checks.append(
+            {
+                "step": step,
+                "total_bader_electron_population": total_population,
+                "reference_electron_population": electron_reference,
+                "residual": electron_residual,
+                "reference_source": electron_reference_source,
+            }
+        )
+        if abs(electron_residual) > electron_tolerance:
+            message = (
+                f"step {step}: Bader electron count residual {electron_residual:.6g} e exceeds "
+                f"tolerance {electron_tolerance:.6g} e ({electron_reference_source})"
+            )
+            analysis_warnings.append(message)
+            if strict_electron_count:
+                raise ValueError(message)
+            warnings_module.warn(message, RuntimeWarning, stacklevel=2)
         electron_rows.append(
-            (system, ensemble, step, len(acf_rows), total_population, expected_valence_population, total_population - expected_valence_population)
+            (
+                system, ensemble, step, len(acf_rows), total_population,
+                expected_valence_population, total_population - expected_valence_population,
+                electron_reference, electron_residual,
+            )
         )
         surface_charge = sum(
             valence[reference.atom_species[index]] - float(acf_rows[index]["electron_population"])
@@ -340,7 +470,11 @@ def analyze_bader(args: argparse.Namespace) -> dict:
     )
     _write_csv(
         output_dir / "bader_total_electrons.csv",
-        ["system", "ensemble", "step", "n_atoms", "total_bader_electron_population", "expected_valence_population", "population_residual"],
+        [
+            "system", "ensemble", "step", "n_atoms", "total_bader_electron_population",
+            "expected_valence_population", "population_residual", "electron_count_reference",
+            "electron_count_residual",
+        ],
         electron_rows,
     )
     _write_csv(
@@ -425,6 +559,18 @@ def analyze_bader(args: argparse.Namespace) -> dict:
         "surface_species": args.surface_species,
         "top_layer_tolerance_A": args.top_layer_tolerance,
         "snapshots": snapshot_ids,
+        "density_grid_check": {
+            "common_dimensions": None if common_density_grid is None else list(common_density_grid),
+            "per_snapshot": density_grids,
+            "files_checked": ["CHGCAR", "CHGCAR_sum", "AECCAR0", "AECCAR2"],
+        },
+        "electron_count_check": {
+            "tolerance_e": electron_tolerance,
+            "reference_rule": "OUTCAR NELECT when present, otherwise sum of POTCAR ZVAL references",
+            "strict": strict_electron_count,
+            "per_snapshot": electron_checks,
+        },
+        "warnings": analysis_warnings,
         "surface_charge_density": {
             "equation": "sigma_uC_cm-2 = Q_surface_e / area_A2 * 1602.176634",
             "conversion_uC_cm2_per_e_A2": 1602.176634,
@@ -463,4 +609,6 @@ def add_bader_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--bader-dir", default=None, help="Override snapshot subdirectory; default follows ensemble")
     parser.add_argument("--potcar", type=Path, default=None, help="POTCAR to validate; defaults to the selected case POTCAR")
     parser.add_argument("--valence", action="append", default=[], metavar="ELEMENT=Z", help="Explicit valence override; checked against POTCAR when present")
+    parser.add_argument("--electron-tolerance", type=float, default=ELECTRON_COUNT_TOLERANCE, metavar="E", help="Allowed ACF/NELECT electron-count residual before warning")
+    parser.add_argument("--strict-electron-count", action="store_true", help="Fail when the ACF electron-count residual exceeds --electron-tolerance")
     parser.add_argument("--overwrite", action="store_true", help="Allow reuse of a non-empty output directory")
