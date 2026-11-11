@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Made the surface-relative H-bond z-profile script donor-centered by default,
+  matching the documented definition that allows 0-2 donor H-bonds per water.
+- Added the November 2026 production donor-centered z-profile Origin CSVs and
+  their settings summary under `examples/production_donor_hbond_delta_z_2026-11/`.
+
 ## 0.1.0
 
 - Added VASP POSCAR/XDATCAR parsing, inventory validation, and shared geometry.

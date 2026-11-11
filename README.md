@@ -148,6 +148,26 @@ if several donor/H witnesses qualify, the smallest angle and then shortest
 O-O distance determine the retained triplet. This mode writes
 `nacceptor_waters_*.csv` summaries, with layer membership based on `O_a`.
 
+For a surface-relative profile without layer assignment, use
+`scripts/analyze_hbond_z_profile.py`. Its default is donor-centered and uses
+the same strict geometric criterion; each z-bin reports the number of directed
+donor-H-bond triplets divided by donor-water oxygen observations in that bin.
+A donor water can therefore contribute 0, 1, or 2 H-bonds, so the profile can
+exceed one. The z-profile does not infer layers; layer statistics remain the
+responsibility of the explicit-boundary hydrogen-bond command.
+
+The production settings used for the compact Origin CSVs in
+`examples/production_donor_hbond_delta_z_2026-11/` are configurations
+5001-9000, 0.3 A bins, `O-O < 3.5 A`, strict angle `< 30 degrees`, and
+parent `O-H <= 1.35 A`.
+
+```bash
+python scripts/analyze_hbond_z_profile.py \
+  --xdatcar data/Cu/aimd1/XDATCAR --reference data/Cu/aimd1/POSCAR \
+  --output-dir results/Cu/aimd1/hbond-z-profile \
+  --start 5001 --end 9000 --bin-width 0.3 --surface-species Cu
+```
+
 ## RDF and coordination number
 
 RDF analysis requires a matching POSCAR/CONTCAR and explicit element labels.

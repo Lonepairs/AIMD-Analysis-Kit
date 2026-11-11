@@ -7,7 +7,7 @@ python scripts/analyze_hbond_z_profile.py \
     --xdatcar data/Cu/aimd1/XDATCAR --reference data/Cu/aimd1/POSCAR \
     --output-dir _smoke/raw-data/Cu-aimd1/hbond-z-profile-5001-5003 \
     --start 5001 --end 5003 --bin-width 0.3 --surface-species Cu \
-    --traversal acceptor
+    --traversal donor
 """
 
 from __future__ import annotations
@@ -46,8 +46,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--angle-max-deg", type=float, default=30.0)
     parser.add_argument("--parent-oh-max", type=float, default=1.35, metavar="A")
     parser.add_argument(
-        "--traversal", choices=("donor", "acceptor"), default="acceptor",
-        help="Count donor waters or unique acceptor-centered waters (default: acceptor)",
+        "--traversal", choices=("donor", "acceptor"), default="donor",
+        help="Count donor-water H-bonds or unique acceptor-centered waters (default: donor)",
     )
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()

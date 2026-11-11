@@ -64,9 +64,9 @@ def main():
     layer.rescale()
 
     graph.lt_exec("layer -s 1; layer.tickstyle=2;")
-    graph.lt_exec('layer -s 1; label -p 50 0 -j 1 -n TITLE "Cu/aimd1 acceptor-centered H-bond profile";')
+    graph.lt_exec('layer -s 1; label -p 50 0 -j 1 -n TITLE "Cu/aimd1 donor-centered H-bond profile";')
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output = OUTPUT_DIR / "Cu-aimd1-acceptor-hbond_z_profile.png"
+    output = OUTPUT_DIR / "Cu-aimd1-donor-hbond_z_profile.png"
     graph.save_fig(str(output), type="png", replace=True, width=IMAGE_WIDTH)
     if not output.is_file() or output.stat().st_size == 0:
         raise RuntimeError("Origin did not create %s" % output)

@@ -102,6 +102,20 @@ This traversal writes `nacceptor_waters_*.csv` files and records the mode and
 per-frame nearest-H assignment in metadata. The default remains donor-centered
 for compatibility.
 
+## Surface-relative H-bond z profile
+
+`analyze_hbond_z_profile.py` uses the donor-centered traversal by default. For
+each selected frame, every oxygen is assigned to a surface-relative z bin.
+The profile value is
+
+`Hbond_per_water(z) = directed donor-H-bond triplets in z / donor-water oxygen observations in z`.
+
+The denominator counts every donor-water oxygen observation, including waters
+with no qualifying bond. Because each donor water has two parent H atoms, the
+value is bounded by 0-2 rather than 0-1. The z-profile does not infer layers;
+layer statistics remain the responsibility of the explicit-boundary
+hydrogen-bond command.
+
 ## RDF and coordination number
 
 Select reference atoms X and neighbor atoms Y by element from the matching
