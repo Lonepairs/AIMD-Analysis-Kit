@@ -8,6 +8,14 @@ Package v0.1.0. The five named analyses, numbered compatibility interface,
 config-driven batch runner, and paired Bader response collector are
 implemented and covered by deterministic fixture tests.
 
+This is a public research software repository. The code is released under the
+MIT License; citation information is in [`CITATION.cff`](CITATION.cff).
+Contribution and security procedures are documented in
+[`CONTRIBUTING.md`](CONTRIBUTING.md) and [`SECURITY.md`](SECURITY.md).
+Production trajectories and large VASP charge-density files are intentionally
+kept outside Git and should be referenced through checksums, storage records,
+or a DOI-backed data release.
+
 ## Installation
 
 Python 3.10 or newer is required. Install the core trajectory-analysis
